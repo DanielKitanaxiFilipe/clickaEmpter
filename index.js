@@ -1,8 +1,8 @@
 // index.js
 import express from "express";
 import cors from "cors";
-import fetch from "node-fetch";
 import dotenv from "dotenv";
+import axios from "axios";
 
 // Carrega variáveis do .env
 dotenv.config();
@@ -24,28 +24,31 @@ app.post("/chat", async (req, res) => {
   }
 
   try {
-    const response = await fetch("https://api.openrouter.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!response.ok) {
-      return res.status(500).json({ text: "Erro ao contatar OpenRouter" });
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.error("Chave OPENROUTER_API_KEY não definida!");
+      return res.status(500).json({ text: "Chave da API não configurada no backend." });
     }
 
-    const data = await response.json();
-    const text = data?.choices?.[0]?.message?.content ?? "";
+    const response = await axios.post(
+      "https://api.openrouter.ai/v1/chat/completions",
+      {
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        },
+      }
+    );
+
+    const text = response.data?.choices?.[0]?.message?.content ?? "";
 
     res.json({ text });
   } catch (err) {
-    console.error("Erro ao processar a mensagem:", err);
+    // Axios já traz mais detalhes de erro
+    console.error("Erro ao processar a mensagem:", err.response?.data || err.message);
     res.status(500).json({ text: "Erro ao processar a mensagem" });
   }
 });
