@@ -45,7 +45,7 @@ async function askOpenRouter(message, history = [], userId = 'default') {
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "meta-llama/llama-3-8b-instruct",
+       model: "gpt-4o-mini",
         messages,
         max_tokens: 150,
         temperature: 0.7,
